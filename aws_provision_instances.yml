@@ -1,0 +1,94 @@
+---
+- name: AWS Provision
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars_files:
+    - vars/instances.yml
+    - vars/default_vars.yml
+
+  tasks:
+
+    - name: Launch instances with required settings
+      ec2_instance:
+        key_name: "{{ key_name }}"
+        name: "{{ item.0.name }}-{{ item.1.seq_num }}"
+        launch_template:
+          name: 'jenkinsAgent-lt'
+        network:
+          assign_public_ip: "{{ item.1.assign_public_ip | default(false) }}"
+        # vpc_subnet_id: "{{ item.1.subnet }}"
+        region: "{{ region }}"
+        state: started
+        tags:
+          HostGroups: "{{ item.0.name }}"
+        wait: yes
+      loop: "{{ instances | subelements('subnets') }}"
+      register: ec2
+
+    # - name: display information for variable - ec2
+    #   debug:
+    #     var: ec2.results
+    #   #   msg: "{{ item.instances.0.tags.Name }} "
+    #   # loop: "{{ ec2.results }}"
+
+    - name: Gather information about ALL instances in a Region
+      ec2_instance_info:
+        region: "{{ region }}"
+      register: ec2_info
+
+    # - name: display information for variable - ec2_info
+    #   debug:
+    #     var: ec2_info
+    #   #   msg: "{{ item.tags.Name }}"
+    #   # loop: "{{ ec2_info.instances }}"
+
+    - name: Get list of REQUIRED instances from registered facts in ec2
+      set_fact:
+        required_instances: "{{ ec2.results | map(attribute='instances.0.tags.Name') | list }}"
+
+    # - debug:
+    #     var: required_instances
+
+    - name: Get list of ALL instances ( except Terminated ) from registered facts in ec2_info
+      set_fact:
+        all_instances: "{{ ec2_info.instances | rejectattr('state.name', 'equalto', 'terminated') | map(attribute='tags.Name') | list }}"
+
+    # - debug:
+    #     var: all_instances | sort
+
+    - name: Get list of DELETED instances from the instances.yml file
+      set_fact:
+        delete_instances: "{{ all_instances | difference(required_instances) }}"
+
+    # - debug:
+    #     var: delete_instances | sort
+
+    - name: Terminate instances that in the delete_instances list
+      ec2_instance:
+        filters:
+          "tag:Name": "{{ delete_instances }}"
+        state: absent
+        region: "{{ region }}"
+        wait: yes
+      when: delete_instances != ""
+
+    - name: Create in-memory Ansible inventory
+      add_host:
+        name: "{{ item.instances.0.public_ip_address }}"
+        groups:
+          - all
+          - "{{ item.instances.0.tags.HostGroups }}"
+      loop: "{{ ec2.results }}"
+      when: item.instances.0.public_ip_address is defined
+      changed_when: false
+
+    - name: Wait for SSH to come up
+      delegate_to: "{{ item.instances.0.public_dns_name }}"
+      wait_for_connection:
+        delay: 60
+        timeout: 320
+      loop: "{{ ec2.results }}"
+      when: item.instances.0.public_ip_address is defined
+...

@@ -1,0 +1,12 @@
+---
+  instances:
+    - name: dev
+      subnets:
+        - seq_num: '01'
+          assign_public_ip: true
+
+    - name: prod
+      subnets:
+        - seq_num: '01'
+          assign_public_ip: true
+...
