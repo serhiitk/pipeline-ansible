@@ -15,7 +15,8 @@
         key_name: "{{ key_name }}"
         name: "{{ item.0.name }}-{{ item.1.seq_num }}"
         launch_template:
-          name: 'jenkinsAgent-lt'
+          # name: 'jenkinsAgent-lt'
+          id: 'lt-01163e43ec148700b'
         network:
           assign_public_ip: "{{ item.1.assign_public_ip | default(false) }}"
         # vpc_subnet_id: "{{ item.1.subnet }}"
