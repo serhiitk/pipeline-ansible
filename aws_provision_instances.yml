@@ -65,8 +65,12 @@
 
   tasks:
 
+    - name: Copy Built directory
+      src: './target/'
+      dest: '/opt'
+
     - name: Run java app
-      command: "nohup java -jar target/*.jar >> nohup.log 2>&1 &"
+      command: "nohup java -jar /opt/*.jar >> nohup.log 2>&1 &"
       environment:
         JENKINS_NODE_COOKIE: 'dontKillMe'
 
