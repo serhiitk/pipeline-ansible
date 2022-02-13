@@ -39,6 +39,7 @@
       changed_when: false
 
     - name: Wait for SSH
+      delegate_to: "{{ item.public_dns_name }}"
       wait_for:
         host: "{{ item.public_dns_name }}"
         port: 22
@@ -67,7 +68,7 @@
 
     - name: Copy Built directory
       copy:
-        src: './target'
+        src: 'target'
         dest: '/opt'
 
     - name: Run Java app in the background
