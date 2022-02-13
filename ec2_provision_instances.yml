@@ -30,12 +30,12 @@
 
     - name: Create in-memory Ansible inventory
       add_host:
-        name: "{{ item.instances.0.public_ip_address }}"
+        name: "{{ item.instances.0.private_ip_address }}"
         groups:
           - all
           - "{{ item.instances.0.tags.HostGroups }}"
       loop: "{{ ec2.results }}"
-      when: item.instances.0.public_ip_address is defined
+      when: item.instances.0.private_ip_address is defined
       changed_when: false
 
     - name: Wait for SSH
