@@ -38,13 +38,23 @@
       when: item.instances.0.public_ip_address is defined
       changed_when: false
 
-    - name: Wait for SSH to come up
-      delegate_to: "{{ item.instances.0.public_dns_name }}"
-      wait_for_connection:
-        delay: 60
-        timeout: 320
-      loop: "{{ ec2.results }}"
-      when: item.instances.0.public_ip_address is defined
+    - name: Wait for SSH
+      wait_for:
+        host: "{{ item.public_dns_name }}"
+        port: 22
+        delay: 10   #Wait for 10 seconds before checking port availability
+        timeout: 320  #Keep checking  for 320 seconds
+        state: started   #Until port is open
+      loop: "{{ ec2.instances }}"
+      when: item.public_ip_address is defined
+
+    # - name: Wait for SSH to come up
+    #   delegate_to: "{{ item.instances.0.public_dns_name }}"
+    #   wait_for_connection:
+    #     delay: 60
+    #     timeout: 320
+    #   loop: "{{ ec2.results }}"
+    #   when: item.instances.0.public_ip_address is defined
 
 # ##########################################################################
 
@@ -55,18 +65,9 @@
 
   tasks:
 
-    - name: Install Nginx
-      package:
-        name: nginx
-        state: present
-      notify:
-        - start Nginx
+    - name: Run java app
+      command: "nohup java -jar target/*.jar >> nohup.log 2>&1 &"
+      environment:
+        JENKINS_NODE_COOKIE: 'dontKillMe'
 
-  handlers:
-
-    - name: start Nginx
-      systemd:
-        name: nginx
-        enabled: yes
-        state: started
 ...
