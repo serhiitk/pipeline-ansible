@@ -1,0 +1,16 @@
+- name: Configuring all instances
+  hosts: all
+  gather_facts: no
+  become: yes
+
+  tasks:
+
+    - name: Copy Built directory
+      copy:
+        src: 'target'
+        dest: '/opt'
+
+    - name: Run Java app in the background
+      shell: nohup java -jar /opt/target/*.jar </dev/null >/dev/null 2>&1 &
+      environment:
+        JENKINS_NODE_COOKIE: 'dontKillMe'
