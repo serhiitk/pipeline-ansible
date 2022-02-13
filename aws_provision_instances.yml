@@ -19,7 +19,7 @@
           id: 'lt-01163e43ec148700b'
         network:
           assign_public_ip: "{{ item.1.assign_public_ip | default(false) }}"
-        # vpc_subnet_id: "{{ item.1.subnet }}"
+        vpc_subnet_id: "{{ item.1.subnet }}"
         region: "{{ region }}"
         state: started
         tags:
@@ -39,15 +39,15 @@
       changed_when: false
 
     - name: Wait for SSH
-      delegate_to: "{{ item.public_dns_name }}"
+      delegate_to: "{{ item.instances.0.public_dns_name }}"
       wait_for:
-        host: "{{ item.public_dns_name }}"
+        host: "{{ item.instances.0.public_dns_name }}"
         port: 22
         delay: 10   #Wait for 10 seconds before checking port availability
         timeout: 320  #Keep checking  for 320 seconds
         state: started   #Until port is open
-      loop: "{{ ec2.instances }}"
-      when: item.public_ip_address is defined
+      loop: "{{ ec2.results }}"
+      when: item.instances.0.public_ip_address is defined
 
     # - name: Wait for SSH to come up
     #   delegate_to: "{{ item.instances.0.public_dns_name }}"

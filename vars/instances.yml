@@ -2,11 +2,13 @@
   instances:
     - name: dev
       subnets:
-        - seq_num: '01'
+        - subnet: 'subnet-0affbf02f382c5648'
+          seq_num: '01'
           assign_public_ip: true
 
     - name: prod
       subnets:
-        - seq_num: '01'
+        - subnet: 'subnet-0affbf02f382c5648'
+          seq_num: '01'
           assign_public_ip: true
 ...
